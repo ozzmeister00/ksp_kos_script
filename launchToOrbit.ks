@@ -83,40 +83,33 @@ until runmode = 0 {
 				SET WARP TO 3.
 			}
 		}
-		else if ETA:APOAPSIS < 60 {
+		else if ETA:APOAPSIS < 120 {
 			SET WARP TO 0.
 			set runmode to 5.
 		}
 		
 	}
 	
-	// raise periapsis
+	// add a new node with the target periapsis, then trigger executeNextManeuver to handle that node.
 	else if runmode = 5 {
 	
-		set updateHeading to true.
+		set updateHeading to false.
 		
-		set targetHeading to heading( 90, 0).
-		SET SASMODE to "PROGRADE".
-	
-		if ETA:APOAPSIS < 5 or VERTICALSPEED < 0{
-			set TVAL to 1.
-		}
+		set tval to 0.
 		
-		if (SHIP:PERIAPSIS > targetPeriapsis) or (SHIP:APOAPSIS >  targetApoapsis * 1.05){
-			set TVAL to 0.
-			set runmode to 10.
-		}
+		// something is broken in here
+		set ORBITBODY to SHIP:BODY.
+		set deltaA to SHIP:MAXTHRUST/SHIP:MASS.
+		set radiusAtAP to ORBITBODY:RADIUS + (targetApoapsis).
+		set orbitalVelocity to ORBITBODY:RADIUS * sqrt(9.81/radiusAtAp).
+		set apVelocity to sqrt(ORBITBODY:MU * ((2/radiusAtAp)-(1/SHIP:OBT:SEMIMAJORAXIS))).
+		set deltaV to (orbitalVelocity - apVelocity).
+		set timeToBurn to deltaV/deltaA.
+		set circNode to node(TIME:SECONDS+ETA:APOAPSIS, 0, 0, deltaV).
+		add circNode.
 		
-	}
-	
-	// once we've reached apoapsis
-	else if runmode = 10 {
-		set TVAL to 0.
-		panels on.
+		set runMode to 0.
 		
-		set runmode to 0.
-		
-		print "WELCOME TO SPACE.".
 	}
 	
 	// Check for Staging
@@ -152,6 +145,8 @@ until runmode = 0 {
 
 SAS off.
 clearscreen.
-print "Welcome to space.".
 
-//run deorbitAnywhere.
+stage.
+
+// execute the circularization burn.
+run executeNextManeuver.
