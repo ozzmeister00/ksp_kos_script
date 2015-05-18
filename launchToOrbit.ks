@@ -146,7 +146,5 @@ until runmode = 0 {
 SAS off.
 clearscreen.
 
-stage.
-
 // execute the circularization burn.
 run executeNextManeuver.
