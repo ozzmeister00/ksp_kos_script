@@ -3,7 +3,12 @@
 clearscreen.
 run lib_physics.
 run lib_pid.
+run lib_controller.
 clearscreen.
+
+set agButtonDescs[0] to "GO DN".
+set agButtonDescs[1] to "GO UP".
+set agButtonDescs[2] to " END ".
 
 print " Seek ALT_RADAR = ".
 print "  Cur ALT_RADAR = ".
@@ -17,12 +22,20 @@ lock betterALTRADAR to max(0.1, ALTITUDE - surfaceElevation).
 
 sas on.
 
-set seekAlt to 50.
+set seekAlt to 20.
 
-// look! triggers and input!
-// might be useful for setting run modes on the fly.
-on ag1 { set seekAlt to seekAlt - 1. preserve. }.
-on ag2 { set seekAlt to seekAlt + 1. preserve. }.
+declare function goDown {
+	set seekAlt to seekAlt - 1.
+}.
+
+declare function goUp {
+	set seekAlt to seekAlt + 1.
+}.
+
+// setting up action mappings on top of axis mappings
+when ag1 = true then { goDown(). preserve. }. //set seekAlt to seekAlt + .1. preserve. }.
+when ag2 = true then { goUp(). preserve. }.
+when ag3 = true then { set runmode to 0. preserve. }.
 
 set ship:control:pilotmainthrottle to 0.
 
@@ -54,14 +67,17 @@ lock throttle to midThrottle + thOffset.
 // get my pid array
 set hoverPID to pid_init(0.02, 0.05, 0.05).
 
-gear on. gear off.
+set runmode to 1.
 
-until gear {
+until runmode = 0 {
 	// throttle offset is determined by getting the Proportional Integral Derivative of the where we are and where we want to be
 	set thOffset to pid_seek(hoverPID, seekAlt, betterALTRADAR).
+	displayActionBlock().
 	displayBlock(18, 0).
 	wait 0.001.
 }
+
+wait 0.1.
 
 // once we're done, set us down very gently
 set runmode to 1.
@@ -74,7 +90,9 @@ until runmode = 0 {
 	// this area should probably be abstracted to a PID controller, as it's a value that needs to change stably over time
 	set seekAlt to seekAlt - descentRate.
 	
+	displayActionBlock().
 	displayBlock(18, 0).
+	
 	wait 0.001.
 	
 	if landingAlt * 1.05 > betterALTRADAR {
@@ -82,3 +100,5 @@ until runmode = 0 {
 		set runmode to 0.
 	}	
 }
+
+clearscreen.
