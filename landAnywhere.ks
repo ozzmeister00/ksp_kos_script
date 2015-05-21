@@ -15,7 +15,7 @@ set TARGETBURNLNG to 50.
 set LANDINGBURNSTARTALTITUDE to 4500. // altitude at which to start the burn. Ideally, this should be a calculated value
 set LANDINGSLOWHEIGHT to 25. // height at which to start transitioning to the min speed value
 set LANDINGMINSPEED to 2.5. // speed to hold while in final touchdown phase
-set CUTOFFHEIGHT to 5. // height at which to cut engines
+set CUTOFFHEIGHT to 100. // height at which to cut engines
 
 // locked values
 lock shipLatLng to SHIP:GEOPOSITION.
@@ -184,8 +184,7 @@ until runmode = 0 {
 			set tval to 0.
 			set targetHeading to UP.
 			print "LANDED!".
-			wait 2.
-			set runmode to 0.
+			run hover.
 		}
 	}
 	

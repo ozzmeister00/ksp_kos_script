@@ -13,7 +13,7 @@ set targetApoapsis to 100000.
 set targetPeriapsis to 100000.
 
 set gravityTurnStart to 500.
-set gravityTurnEnd to 45000.
+set gravityTurnEnd to 55000.
 
 set updateHeading to true.
 
@@ -34,7 +34,7 @@ when ship:solidfuel < 0.1 then {
 until runmode = 0 {
 	set updateHeading to true.
 	set targetHeading to PROGRADE.
-
+	
 	// launch
 	if runmode = 1 {
 	
@@ -138,7 +138,9 @@ until runmode = 0 {
 	print "APOAPSIS:        " + round(ship:apoapsis) + "     " at (5,7).
 	print "PERIAPSIS:       " + round(ship:periapsis) + "     " at (5,8).
 	print "ETA TO AP:       " + round(ETA:APOAPSIS) + "     " at (5,9).
+	print "TVAL:            " + round(tval, 3) + "       " at (5,10).
 	
+	wait 0.001.
 }
 
 // final cleanup
