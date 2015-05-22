@@ -1,5 +1,7 @@
 // hover.ks
 
+// TODO: It looks like stability mode isn't disengaging when it's supposed to!
+
 // libraries
 clearscreen.
 run lib_physics.
@@ -9,9 +11,11 @@ run lib_maths.
 clearscreen.
 
 // parameters
-set seekAlt to 500.
+set seekAlt to 15.
 set descentRate to .1.
 set landingAlt to 10.
+set horizSpeedMax to 20.
+set horizDeflectionMax to 30.
 
 // locked variables
 lock shipLatLng to SHIP:GEOPOSITION.
@@ -48,6 +52,9 @@ declare function stabilizer {
 	if agAxisMapping[2] = true {
 		lock midPitch to 0.
 		lock midYaw to UP:YAW. // make sure we're always facing up
+		lock targetPitch to midPitch + xOffset.
+		lock targetYaw to midYaw + yOffset.
+		
 		lock steering to R(targetPitch, targetYaw, 180). // let the user define the roll of the ship
 	}
 	else {
@@ -61,7 +68,9 @@ declare function killHorizontal {
 	// turn off the balancer visual
 	set agAxisMapping[2] to false.
 	
-	stabilizer().
+	//stabilizer().
+	
+	lock steering to R(targetPitchK, targetYawK, 180). // let the user define the roll of the ship
 	
 }.
 
@@ -87,15 +96,12 @@ declare function displayBlock {
 	// information dispaly
 	print " Seek ALT_RADAR : " + round(seekAlt,2) + "     " at (startCol, startRow).
 	print " Cur ALT_RADAR  : " + round(betterALTRADAR,2) + "      " at (startCol, startRow+1).
-	print " 1g Throttle    : " + round(midThrottle,3) + "     " at (startCol, startRow+2).
-	print " Throttle Offset: " + round(thOffset,3) + "     " at (startCol, startRow+3).
-	print " Total Throttle : " + round(throttle,3) + "     " at (startCol, startRow+4).
-	print " Current Heading: " + round(targetYaw, 2) + " | " + round(targetPitch,2) + "           " at (startCol,startRow+5).
-	print " SpeedX         : " + round(currPitchSpeed, 2) + "    " at (startCol,startRow+6).
-	print " SpeedY         : " + round(currYawSpeed, 2) + "    " at (startCol,startRow+7).
-	print " xOffset        : " + round(xOffset, 2) + "    " at (startCol,startRow+8).
-	print " yOffset        : " + round(yOffset, 2) + "    " at (startCol,startRow+9).
-	
+	print " Current Heading: " + round(targetYaw, 2) + " | " + round(targetPitch,2) + "           " at (startCol,startRow+2).
+	print " SpeedX         : " + round(currPitchSpeed, 2) + "    " at (startCol,startRow+3).
+	print " SpeedY         : " + round(currYawSpeed, 2) + "    " at (startCol,startRow+4).
+	print "                  " at (startCol, startRow+5).
+	print " SeekPitch      : " + round(seekPitch, 1) + "    " at (startCol, startRow+6).
+	print " SeekYaw      : " + round(SeekYaw, 1) + "    " at (startCol, startRow+7).
 }.
 
 // hover exactly against gravity (in principle)
@@ -114,7 +120,7 @@ set hoverPID to pid_init(0.02, 0.05, 0.05).
 
 // ** BALANCING PIDs ** //
 
-// control midpoints
+// control midpoints (where we want to be pointing)
 lock midPitch to 0.
 lock midYaw to UP:YAW. // make sure we're always facing up
 
@@ -134,7 +140,26 @@ lock targetYaw to midYaw + yOffset.
 set xPID to pid_init(0.02, 0.05, 0.05).
 set yPID to pid_init(0.02, 0.05, 0.05).
 
+// ** Kill Horizontal Velocity PID ** //
+
+lock currPitch to SHIP:FACING:PITCH.
+lock currYaw to SHIP:FACING:YAW.
+
+lock seekPitch to -(currPitchSpeed / horizSpeedMax) * horizDeflectionMax.
+lock seekYaw to UP:YAW - ((currYawSpeed / horizSpeedMax) * horizDeflectionMax).
+
+set pitchOffset to 0.
+set yawOffset to 0.
+
+lock targetPitchK to currPitch + pitchOffset.
+lock targetYawK to currYaw + yawOffset.
+
+// used for moving the midPitch and midYaw values to cancel horizontal velocity
+set pitchPID to pid_init(0.02, 0.05, 0.05).
+set yawPID to pid_init(0.02, 0.05, 0.05).
+
 set runmode to 1.
+
 stabilizer().
 
 until runmode = 0 {
@@ -147,9 +172,15 @@ until runmode = 0 {
 	displayActionBlock().
 	displayBlock(5, 5).
 	
-	// watch to transition from kill horizontal to balance
+	// handle continuous updates for killHorizontal
 	if agAxisMapping[3] = true {
-		if currPitchSpeed + currYawSpeed < 0.2 { stabilizer(). }
+		// if we're in tolerance ranges, switch back to stabilizer mode
+		//if currPitchSpeed + currYawSpeed < 0.1 { stabilizer(). }
+		
+		// update our new target heading
+		set pitchOffset to pid_seek(pitchPID, seekPitch, currPitch).
+		set yawOffset to pid_seek(yawPID, seekYaw, currYaw).
+		
 	}
 	
 	// landing mode
