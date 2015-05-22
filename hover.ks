@@ -14,8 +14,9 @@ clearscreen.
 set seekAlt to 15.
 set descentRate to .1.
 set landingAlt to 10.
-set horizSpeedMax to 20.
-set horizDeflectionMax to 30.
+set horizSpeedMax to 15.
+set horizDeflectionMax to 45.
+set horizSpeedTolerance to 0.1.
 
 // locked variables
 lock shipLatLng to SHIP:GEOPOSITION.
@@ -50,12 +51,10 @@ declare function stabilizer {
 	set agAxisMapping[3] to false.
 	
 	if agAxisMapping[2] = true {
-		lock midPitch to 0.
-		lock midYaw to UP:YAW. // make sure we're always facing up
-		lock targetPitch to midPitch + xOffset.
-		lock targetYaw to midYaw + yOffset.
+		lock steering to R(targetPitch, targetYaw, 180).
 		
-		lock steering to R(targetPitch, targetYaw, 180). // let the user define the roll of the ship
+		set pitchOffset to 0.
+		set yawOffset to 0.
 	}
 	else {
 		unlock steering.
@@ -68,10 +67,15 @@ declare function killHorizontal {
 	// turn off the balancer visual
 	set agAxisMapping[2] to false.
 	
-	//stabilizer().
-	
-	lock steering to R(targetPitchK, targetYawK, 180). // let the user define the roll of the ship
-	
+	if agAxisMapping[3] = true {
+		lock steering to R(targetPitch, targetYaw, 180).
+		
+		set xOffset to 0.
+		set yOffset to 0.
+	}
+	else {
+		unlock steering.
+	}
 }.
 
 // setting up action mappings
@@ -100,8 +104,8 @@ declare function displayBlock {
 	print " SpeedX         : " + round(currPitchSpeed, 2) + "    " at (startCol,startRow+3).
 	print " SpeedY         : " + round(currYawSpeed, 2) + "    " at (startCol,startRow+4).
 	print "                  " at (startCol, startRow+5).
-	print " SeekPitch      : " + round(seekPitch, 1) + "    " at (startCol, startRow+6).
-	print " SeekYaw      : " + round(SeekYaw, 1) + "    " at (startCol, startRow+7).
+	print " pitchOffset    : " + round(pitchOffset, 3) + "    " at (startCol, startRow+6).
+	print " yawOffset    : " + round(pitchOffset, 3) + "    " at (startCol, startRow+7).
 }.
 
 // hover exactly against gravity (in principle)
@@ -134,52 +138,44 @@ lock currYawSpeed to VELOCITY:SURFACE:Y.
 set xOffset to 0.
 set yOffset to 0.
 
-lock targetPitch to midPitch + xOffset.
-lock targetYaw to midYaw + yOffset.
-
 set xPID to pid_init(0.02, 0.05, 0.05).
 set yPID to pid_init(0.02, 0.05, 0.05).
-
-// ** Kill Horizontal Velocity PID ** //
-
-lock currPitch to SHIP:FACING:PITCH.
-lock currYaw to SHIP:FACING:YAW.
-
-lock seekPitch to -(currPitchSpeed / horizSpeedMax) * horizDeflectionMax.
-lock seekYaw to UP:YAW - ((currYawSpeed / horizSpeedMax) * horizDeflectionMax).
 
 set pitchOffset to 0.
 set yawOffset to 0.
 
-lock targetPitchK to currPitch + pitchOffset.
-lock targetYawK to currYaw + yawOffset.
-
-// used for moving the midPitch and midYaw values to cancel horizontal velocity
-set pitchPID to pid_init(0.02, 0.05, 0.05).
-set yawPID to pid_init(0.02, 0.05, 0.05).
+lock targetPitch to midPitch + xOffset + pitchOffset.
+lock targetYaw to midYaw + yOffset - yawOffset.
 
 set runmode to 1.
-
-stabilizer().
 
 until runmode = 0 {
 	// throttle offset is determined by getting the Proportional Integral Derivative of the where we are and where we want to be
 	set thOffset to pid_seek(hoverPID, seekAlt, betterALTRADAR).
 	
-	set xOffset to pid_seek(xPID, seekPitchSpeed, currPitchSpeed).
-	set yOffset to pid_seek(yPID, seekYawSpeed, currYawSpeed).
-	
 	displayActionBlock().
 	displayBlock(5, 5).
-	
-	// handle continuous updates for killHorizontal
-	if agAxisMapping[3] = true {
-		// if we're in tolerance ranges, switch back to stabilizer mode
-		//if currPitchSpeed + currYawSpeed < 0.1 { stabilizer(). }
 		
-		// update our new target heading
-		set pitchOffset to pid_seek(pitchPID, seekPitch, currPitch).
-		set yawOffset to pid_seek(yawPID, seekYaw, currYaw).
+	// continuously update stabilizer mode
+	if agAxisMapping[2] = true {
+		set xOffset to pid_seek(xPID, seekPitchSpeed, currPitchSpeed).
+		set yOffset to pid_seek(yPID, seekYawSpeed, currYawSpeed).
+		set pitchOffset to 0.
+		set yawOffset to 0.
+	}
+	
+	// handle continuous updates for killHorizontal mode
+	if agAxisMapping[3] = true {
+		set xOffset to 0.
+		set yOffset to 0.
+		set pitchOffset to (currYawSpeed / horizSpeedMax) * horizDeflectionMax.
+		set yawOffset to ((currPitchSpeed / horizSpeedMax) * horizDeflectionMax).
+		
+		// exit the horizontal kill velocity mode if we're within tolerances of horizontal velocity
+		if abs(currPitchSpeed + currYawSpeed) < horizSpeedTolerance {
+			killHorizontal().
+			stabilizer().
+		}
 		
 	}
 	
@@ -193,9 +189,11 @@ until runmode = 0 {
 		}	
 	}
 	
-	
-	
 	wait 0.001.
 }
+
+unlock steering.
+set throttle to 0.
+unlock throttle.
 
 clearscreen.
