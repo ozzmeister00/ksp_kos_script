@@ -10,9 +10,9 @@
 // http://www.reddit.com/r/Kos/comments/2m95li/autoland_for_spaceplanes/
 
 // libraries
-run lib_pid.
-run lib_controller.
-run lib_maths.
+runpath("ksp_kos_script\libs\lib_pid.ks").
+runpath("ksp_kos_script\libs\lib_controller.ks").
+runpath("ksp_kos_script\libs\lib_maths.ks").
 
 // parameters
 set TOLERANCE to 0.5.

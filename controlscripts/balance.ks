@@ -4,8 +4,8 @@
 // init libraries
 clearscreen.
 
-run lib_physics.
-run lib_pid.
+runpath("ksp_kos_scripts\libs\lib_physics.ks").
+runpath("ksp_kos_scripts\libs\lib_pid.ks").
 
 clearscreen.
 

@@ -1,7 +1,7 @@
 // launchToOrbit.ks
 //
 
-SAS ON.
+SAS OFF.
 SET SASMODE TO "STABILITY".
 RCS off.
 lock throttle to 0.
@@ -149,4 +149,4 @@ SAS off.
 clearscreen.
 
 // execute the circularization burn.
-run executeNextManeuver.
+runpath("ksp_kos_script\controlscripts\executeNextManeuver.ks").

@@ -1,7 +1,7 @@
 // deorbitAnywhere.ks
 
 // make sure we're in the right state
-SAS ON.
+SAS OFF.
 SET SASMODE TO "STABILITY".
 RCS off.
 lock throttle to 0.
