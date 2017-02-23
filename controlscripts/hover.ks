@@ -31,7 +31,7 @@ lights off.
 // button descriptions
 set agButtonDescs[0] to "GO DN".
 set agButtonDescs[1] to "GO UP".
-set agButtonDescs[2] to "STLBZ".
+set agButtonDescs[2] to "UPRGT".
 set agButtonDescs[3] to "HORIZ".
 set agButtonDescs[4] to " LND ".
 
@@ -44,14 +44,15 @@ declare function goUp {
 	set seekAlt to seekAlt + 1.
 }.
 
+// Keep the thing pointed up
 declare function stabilizer {
 	
-	set agAxisMapping[2] to not agAxisMapping[2].
+	set agAxisMapping[2] to not agAxisMapping[2]. // toggle the current mode
 	
-	set agAxisMapping[3] to false.
+	set agAxisMapping[3] to false. // disable horizontal mode
 	
 	if agAxisMapping[2] = true {
-		lock steering to R(targetPitch, targetYaw, 180).
+		//lock steering to R(targetPitch, targetYaw, 180).
 		
 		set pitchOffset to 0.
 		set yawOffset to 0.
@@ -68,7 +69,7 @@ declare function killHorizontal {
 	set agAxisMapping[2] to false.
 	
 	if agAxisMapping[3] = true {
-		lock steering to R(targetPitch, targetYaw, 180).
+		//lock steering to R(targetPitch, targetYaw, 180).
 		
 		set xOffset to 0.
 		set yOffset to 0.
@@ -178,7 +179,7 @@ until runmode = 0 {
 		}
 		
 	}
-	
+    
 	// landing mode
 	if agAxisMapping[4] = true {
 		set seekAlt to max(landingAlt, seekAlt - descentRate).
@@ -189,6 +190,9 @@ until runmode = 0 {
 		}	
 	}
 	
+    // update steering
+    lock steering to R(targetPitch, targetYaw, 180).
+    
 	wait 0.001.
 }
 
