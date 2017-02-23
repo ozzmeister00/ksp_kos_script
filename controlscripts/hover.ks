@@ -4,10 +4,10 @@
 
 // libraries
 clearscreen.
-run lib_physics.
-run lib_pid.
-run lib_controller.
-run lib_maths.
+runpath("ksp_kos_script\libs\lib_physics.ks").
+runpath("ksp_kos_script\libs\lib_pid.ks").
+runpath("ksp_kos_script\libs\lib_controller.ks").
+runpath("ksp_kos_script\libs\lib_maths.ks").
 clearscreen.
 
 // parameters
