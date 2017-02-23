@@ -7,6 +7,7 @@
 // TODO: land at a target longitude
 // TODO: Remove circularization logic. That can be handled by hand before executing the landing maneuver
 // TODO: Handle situations in which the periapsis is already below the surface of the target body
+// http://www.reddit.com/r/Kos/comments/2m95li/autoland_for_spaceplanes/
 
 // user-defined parameters
 set TARGETORBIT to 30000. // the orbit from which to start the descent burn

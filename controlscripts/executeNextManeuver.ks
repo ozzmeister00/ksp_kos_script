@@ -7,7 +7,8 @@
 // port the burn time updating code over to the launch script to get a better circularization burn
 // pull the stat-printing code into a separate file so it can be called and extended 
 // http://www.reddit.com/r/Kos/comments/2xqiuc/steering_pid_controller_accounting_for_angular/
-// http://www.reddit.com/r/Kos/comments/2m95li/autoland_for_spaceplanes/
+// tune pid
+// if angle error is too great, the terminal step of the burn time goes afoul
 
 // libraries
 runpath("ksp_kos_script\libs\lib_pid.ks").
@@ -25,7 +26,7 @@ RCS off.
 lock throttle to 0.
 gear off.
 
-clearscreen.
+//clearscreen.
 	
 set X to NEXTNODE.
 set tval to 0.
@@ -45,8 +46,8 @@ set INITIALBURNVECTOR to X:BURNVECTOR:DIRECTION.
 // i-gain - gets you where you want at the speed you want 
 // d-gain - prevents overshoot
 	
-set pitchPID to pid_init(1, 0.25, 1).
-set yawPID to pid_init(1, 0.25, 1).
+set pitchPID to pid_init(1, 0.05, 0.05).
+set yawPID to pid_init(1, 0.05, 0.05).
 set throttlePID to pid_init(0.02, 0.05, 0.05).
 	
 set xOffset to 0.
@@ -61,6 +62,9 @@ lock targetYaw to midYaw + yOffset.
 lock steeringError to getSteeringError(targetHeading).
 lock yErr to steeringError:X/180.
 lock xErr to steeringError:Y/180.
+	
+// make sure we start in runmode 1.
+set runmode to 1.
 	
 // main loop
 until runmode = 0 {
@@ -101,11 +105,10 @@ until runmode = 0 {
 	
 	// execute burn
 	else if runmode = 3 {
-	
+		
 		set updateHeading to true.
 		
 		set targetHeading to X:BURNVECTOR:DIRECTION.
-		SET SASMODE to "STABILITY".
 	
 		// throttle up!
 		if X:ETA < burnDuration/2 {
@@ -120,13 +123,13 @@ until runmode = 0 {
 		}
 		
 	}	
+	
 	// throttling down
 	else if runmode = 4 {
 	
 		set updateHeading to true.
 		// lock to the initial burn vector so that we don't end up drifting during the last part of the burn.
 		set targetHeading to INITIALBURNVECTOR.
-		set SASMODE to "STABILITY".
 	
 		set tval to 0.25.
 	
@@ -134,6 +137,7 @@ until runmode = 0 {
 	
 		// if the burn is over
 		if X:BURNVECTOR:MAG < TOLERANCE {
+			PRINT X:BURNVECTOR:MAG + " < " + TOLERANCE.
 			set tval to 0.
 			set runmode to 5.
 		}

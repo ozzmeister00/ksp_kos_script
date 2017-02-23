@@ -1,5 +1,7 @@
 // deorbitAnywhere.ks
 
+// TODO: land at coordinates
+
 // make sure we're in the right state
 SAS OFF.
 SET SASMODE TO "STABILITY".
@@ -120,7 +122,7 @@ until runmode = 0 {
 	// TODO:
 	// Debug draw lines for target heading and current heading
 	
-	clearscreen.
+	//clearscreen.
 	
 	if updateHeading = true { lock STEERING to targetHeading. print "Updating heading.".}
 	lock throttle to TVAL.
@@ -131,15 +133,13 @@ until runmode = 0 {
 	print "PERIAPSIS:       " + round(ship:periapsis) + "     " at (5,8).
 	print "ETA TO AP:       " + round(ETA:APOAPSIS) + "     " at (5,9).
 	
-	// cleanup
-	if runmode = 0 {
-		clearscreen.
-		
-		SAS off.
-		Gear on.
-		
-		print "And now we coast gently back to the planet".
-	
-	}
-	
 }
+
+	
+// cleanup
+clearscreen.
+
+SAS off.
+Gear on.
+
+print "And now we coast gently back to the planet".

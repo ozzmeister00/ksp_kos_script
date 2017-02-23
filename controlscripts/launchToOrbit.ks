@@ -1,5 +1,7 @@
 // launchToOrbit.ks
-//
+// todo: launch into user-defined orbit and inclination
+// todo: launch into a rendevous orbit with a target
+// todo: dock with target
 
 SAS OFF.
 SET SASMODE TO "STABILITY".
@@ -146,7 +148,7 @@ until runmode = 0 {
 // final cleanup
 
 SAS off.
-clearscreen.
+//clearscreen.
 
 // execute the circularization burn.
 runpath("ksp_kos_script\controlscripts\executeNextManeuver.ks").
